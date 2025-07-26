@@ -1,0 +1,258 @@
+
+create schema NGO;
+set search_path to NGO;
+
+create table Admin(
+    contact_infor decimal(10,0) primary key
+	
+);
+
+
+CREATE TABLE signuporlogin(
+  username VARCHAR(100) primary key,
+  email VARCHAR(100),
+  password VARCHAR(100),
+  contactNumber decimal(10,0),
+  NGO_contact_info decimal(8,0),
+  foreign key (NGO_contact_info) references Admin(contact_infor) ON DELETE CASCADE
+
+);
+
+
+
+
+CREATE TABLE donors(
+    donor_id INT PRIMARY KEY,
+    donor_name VARCHAR(50) NOT NULL,
+    email_id VARCHAR(100) UNIQUE,
+    NGO_contact_details decimal(10,0) not null,
+    donor_addrs_state varchar(50),
+    donor_addrs_city varchar(50),
+    donor_addrs_pin decimal(10,0),
+    donor_occupation varchar(30),
+    donor_ph_no decimal(12,0),
+    foreign key (NGO_contact_details) references Admin(contact_infor) ON DELETE CASCADE
+
+);
+
+
+
+
+CREATE TABLE department (
+    dept_code VARCHAR(3) PRIMARY KEY,
+    dept_name VARCHAR(50) NOT NULL,
+    contact_i decimal(8,0),
+    
+    foreign key (contact_i) references Admin(contact_infor) on delete cascade
+);
+
+
+
+
+CREATE TABLE donor_interest (
+    donor_id INT,
+    pref_interest VARCHAR(255),
+    PRIMARY KEY (donor_id, pref_interest),
+    FOREIGN KEY (donor_id) REFERENCES donors(donor_id)
+);
+
+
+CREATE TABLE donor_timeline (
+    donor_id INT,
+    donation_date TIMESTAMP,
+    pref_payment_method VARCHAR(50),
+    FOREIGN KEY (donor_id) REFERENCES donors(donor_id)
+);
+
+
+
+CREATE TABLE donation_made (
+    donor_id INT,
+    donation_date DATE,
+    d_amount INT,
+    FOREIGN KEY (donor_id) REFERENCES donors(donor_id)
+);
+
+CREATE TABLE project (
+    project_id INT PRIMARY KEY,
+    p_name VARCHAR(100) NOT NULL,
+    budget_allocated DECIMAL(10, 2),
+    income_source VARCHAR(100),
+    start_time DATE,
+    end_time DATE,
+    dept_code VARCHAR(3),
+    FOREIGN KEY (dept_code) REFERENCES department(dept_code)
+);
+
+
+
+
+CREATE TABLE Volunteers (
+    v_id INT PRIMARY KEY,
+    v_name VARCHAR(50),
+    v_ph_no DECIMAL(10,0) NOT NULL,
+    v_gender VARCHAR(2),
+    project_id INT NOT NULL,
+    FOREIGN KEY (project_id) REFERENCES project(project_id)
+);
+
+
+
+CREATE TABLE events(
+    event_id INT PRIMARY KEY,
+    event_name VARCHAR(255) NOT NULL,
+    event_date DATE,
+    event_time TIMESTAMP,
+    venue VARCHAR(255),
+    dept_code varchar(3),
+    FOREIGN KEY (dept_code) REFERENCES department (dept_code)
+);
+    
+
+
+CREATE TABLE EVENT_MANAGER (
+    e_mgr_id int PRIMARY KEY,
+    e_mgr_name varchar(50),
+    e_mgr_phone decimal(10,0),
+	e_event_id int,
+	foreign key (e_event_id) references events(event_id)
+);
+
+create table Event_crew(
+    crew_id INT PRIMARY KEY,
+    crew_name varchar(50) not null,
+    manager_id int,
+    foreign key (manager_id) references EVENT_MANAGER(e_mgr_id) on delete cascade
+    );
+
+
+
+CREATE TABLE beneficiary (
+    b_id INT PRIMARY KEY,
+    b_name VARCHAR(50) NOT NULL,	
+    cont_no decimal(10,0),
+    beneficiary_age INT,
+    b_addrs_state VARCHAR(100),
+    b_addrs_city VARCHAR(40),
+    b_addrs_pin INT,
+    b_gender VARCHAR(10),
+    rcvd_services VARCHAR(100)
+--     foreign key (b_id) references project(beneficiary_id) ON DELETE CASCADE
+);
+
+CREATE TABLE participants (
+    participant_id INT PRIMARY KEY,
+    par_name VARCHAR(50) NOT NULL,
+    address_state VARCHAR(50),
+    address_pin decimal(6,0),
+    address_city VARCHAR(50),
+    registration_date DATE,
+    contact_no decimal(10,0),
+    emergency_contact_no decimal(10,0)
+);
+create table participates_in(
+    p_event_id INT,
+    part_id INT,
+    foreign key (p_event_id) references  events(event_id),
+	foreign key (part_id) references  participants(participant_id)
+);
+
+
+
+CREATE TABLE Aids(
+    project_id INT,
+    beneficiary_id INT, 
+    FOREIGN KEY (project_id) REFERENCES project(project_id) ON DELETE CASCADE,
+    FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(b_id) ON DELETE CASCADE
+); 
+
+
+
+
+create table survey(
+    survey_region varchar(40),
+    survey_time timestamp,
+    survey_region_population INT,
+    depart_code varchar(3),
+    primary key (survey_region, survey_time,depart_code),
+    foreign key (depart_code) references department(dept_code) on delete cascade
+);
+
+CREATE TABLE eco_survey_info (
+    surveyee_id VARCHAR(10),
+    survey_region VARCHAR(40),
+    survey_time DATE,
+    foreign key (survey_region) references survey(survey_region) on delete cascade,
+    foreign key (survey_time) references survey(survey_time) on delete cascade
+
+);
+
+CREATE TABLE edu_survey_info (
+    surveyee_id VARCHAR(10),
+    survey_region VARCHAR(40),
+    survey_time DATE,
+    foreign key (survey_region) references survey(survey_region) on delete cascade,
+    foreign key (survey_time) references survey(survey_time) on delete cascade
+);
+
+CREATE TABLE health_survey_info (
+    surveyee_id VARCHAR(10),
+    survey_region VARCHAR(40),
+    survey_time DATE,
+    foreign key (survey_region) references survey(survey_region) on delete cascade,
+    foreign key (survey_time) references survey(survey_time) on delete cascade
+);
+
+CREATE TABLE env_survey_info (
+    surveyee_city VARCHAR(40),
+    survey_region VARCHAR(40),
+    survey_time DATE,
+    foreign key (survey_region) references survey(survey_region) on delete cascade,
+    foreign key (survey_time) references survey(survey_time) on delete cascade
+);
+
+CREATE TABLE Economical_survey (
+    surveyee_id CHAR(10) PRIMARY KEY,
+    age INT,
+    gender VARCHAR(20),
+    occupation VARCHAR(40),
+    average_monthly_income INT,
+    avg_monthly_expenses INT,
+    wages_salaried VARCHAR(30),
+    FOREIGN KEY (surveyee_id) REFERENCES eco_survey_info(surveyee_id)
+);
+
+CREATE TABLE Educational_survey (
+    surveyee_id CHAR(10) PRIMARY KEY,
+    Occupation VARCHAR(40),
+    Salary_part_time_income INT,
+    Highest_qualification VARCHAR(100),
+    read_a_language VARCHAR(10),
+    write_a_language VARCHAR(10),
+    FOREIGN KEY (surveyee_id) REFERENCES edu_survey_info(surveyee_id)
+);
+CREATE TABLE Health_survey (
+    surveyee_id CHAR(10) PRIMARY KEY,
+    Age INT,
+    Gender CHAR(1),
+    Weight INT,
+    Height INT,
+    Major_disease_chronic VARCHAR(80),
+    Minor_disease VARCHAR(80),
+    Smoking_Drinking VARCHAR(40),
+    Vaccinated_with_both_doses_of_covid VARCHAR(40),
+    FOREIGN KEY (surveyee_id) REFERENCES health_survey_info(surveyee_id)
+);
+
+
+CREATE TABLE Environmental_survey (
+    survey_city VARCHAR(40),
+    diversity_of_plants INT,
+    diversities_of_animals INT,
+    Annual_CO2_emission INT,
+    no_of_days_with_extreme_rainfall INT,
+    PRIMARY KEY (survey_city),
+    FOREIGN KEY (survey_city) REFERENCES env_survey_info(surveyee_city)
+);
+
+

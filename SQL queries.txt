@@ -1,0 +1,263 @@
+1.) What resources are allocated to each project?
+SELECT 
+    p.project_id,
+    p.project_name,
+    COUNT(v.volunteer_id) AS number_of_volunteers,
+    p.total_budget AS budget_allocated
+FROM 
+    project p
+LEFT JOIN 
+    volunteers v ON p.project_id = v.project_id
+GROUP BY 
+    p.project_id, p.project_name, p.total_budget;
+
+2.) How many beneficiaries have been served by each project?
+SELECT
+    a.project_id,
+    COUNT(b.beneficiary_id) as number_of_beneficiaries_served
+FROM
+    Aids a
+LEFT JOIN
+    Beneficiary b ON a.project_id = b.project_id
+GROUP BY
+    a.project_id;
+
+3.) Give the financial status of each project.
+SELECT 
+    project_id,
+    project_name,
+    income_source,
+    budget_allocated,
+    expense_incurred_so_far,
+    (expense_incurred_so_far / budget_allocated) * 100 AS budget_utilization_rate,
+    budget_allocated - expense_incurred_so_far AS remaining_budget
+FROM 
+    project;
+
+4.) What is the donation history of each donor?
+SELECT
+    donor_id,
+    donor_name,
+    donor_ph_no,
+    email_id,
+    donation_date,
+    payment_method,
+    amount as donation_amount
+FROM
+    donor
+ORDER BY
+    donor_id, donation_date DESC;
+
+5.) What specific domain within the NGO's operations tends to receive the highest number of donors?
+SELECT 
+    Domain,
+    COUNT(DISTINCT Donor_id) AS Number_of_Donors
+FROM 
+    Donations
+GROUP BY 
+    Domain
+ORDER BY 
+    Number_of_Donors DESC
+LIMIT 1;
+
+6.) What is the distribution of donors by location (city, state, country)?
+SELECT
+    donor_state,
+    donor_city,
+    donor_pincode
+    count(donor_id)
+FROM
+    donor
+GROUP BY
+    donor_state, donor_city, donor_pincode;
+
+7.) What is the most preferred payment method among donors?
+SELECT
+    payment_method,
+    count(donor_id)
+FROM 
+    donor
+GROUP BY
+    payment_method;
+
+8.) Which event has the most people participating?
+SELECT 
+    r.Event_id,
+    count(r.Participant_id) as participant_count
+FROM
+    (SELECT * FROM Participants p JOIN Participates_in pin on p.participant_id=pin.participant_id) AS r
+GROUP BY
+    r.Event_id
+ORDER BY
+    participant_count DESC
+LIMIT 1;
+
+9.) Which department hosted the most number of events ?
+SELECT 
+    Dept_code,
+    count(Event_id) as event_count
+FROM 
+    Events
+GROUP BY
+    Dept_code
+ORDER BY
+    event_count DESC
+LIMIT 1;
+
+10.) Determine the proportion of illiteracy in the region where the NGO's survey was done.
+SELECT 
+    esi.survey_region AS Region,
+    (COUNT(CASE 
+            WHEN e.Highest_qualification IS NULL THEN 1 
+            WHEN e.read_a_language = 'No' THEN 1 
+            WHEN e.write_a_language = 'No' THEN 1 
+            ELSE NULL 
+        END) * 100.0 / COUNT(*)) AS Percentage_of_Illiteracy
+FROM 
+    Educational_survey AS e
+JOIN 
+    education_survey_info AS esi ON e.Survey_region = esi.survey_region AND e.Survey_time = esi.survey_time
+GROUP BY 
+    esi.survey_region;
+
+11.) Determine whether someone is below poverty line or not.
+SELECT 
+    *,
+    CASE 
+        WHEN (Avg_monthly_income - Avg_monthly_expense) < poverty_threshold THEN 'Below Poverty Line'
+        ELSE 'Above Poverty Line'
+    END AS Poverty_Status
+FROM
+    Economical_survey;
+
+12.) Among the illiterate people, how many are below the poverty line ? 
+SELECT 
+    COUNT(*) AS Count_of_illiterate_below_poverty_line
+FROM 
+    Educational_survey
+WHERE 
+    (Highest_qualification IS NULL OR read_a_language = 'N' OR write_a_language = 'N')
+    AND (Avg_monthly_income - Avg_monthly_expense) < 1059.42;
+
+13.) Find the profession which has the maximum number of people who are below the poverty line ?
+SELECT
+    Occupation,
+    COUNT(*) AS Count_of_below_poverty_line
+FROM
+    Economical_survey
+WHERE
+    Avg_monthly_income-Avg_monthly_expense < 1059.42
+GROUP BY
+    Occupation
+ORDER BY 
+    Count_of_below_poverty_line DESC
+LIMIT 1;
+
+14.) List all major illness of people collected in the survey and name the most common illness.
+SELECT 
+    Major_disease,
+    COUNT(*) AS Count_of_occurrences
+FROM 
+    Health_survey
+WHERE 
+    Major_disease IS NOT NULL
+GROUP BY 
+    Major_disease
+ORDER BY 
+    Count_of_occurrences DESC
+LIMIT 1;
+
+15.) What is the variation/distribution of wealth within your economic group in which survey was conducted? (First calculate the mean of income and then find the square of difference between individual income and mean which is basically variance).
+SELECT 
+    AVG(Avg_monthly_income) AS Mean_income
+FROM 
+    Economical_survey;
+
+-- Find the square of the difference between individual income and the mean and square all of them
+SELECT 
+    (Avg_monthly_income - Mean_income) AS Difference,
+    POWER(Avg_monthly_income - Mean_income, 2) AS Squared_difference
+FROM 
+    Economical_survey
+CROSS JOIN 
+    (SELECT AVG(Avg_monthly_income) AS Mean_income FROM Economical_survey) AS Subquery;
+
+-- Sum all the squared differences
+SELECT 
+    SUM(POWER(Avg_monthly_income - Mean_income, 2)) AS Sum_of_squared_differences
+FROM 
+    Economical_survey
+CROSS JOIN 
+    (SELECT AVG(Avg_monthly_income) AS Mean_income FROM Economical_survey) AS Subquery;
+
+16.) Give the Carbon Footprint per Capita of all cities and give the top 3 cities which have the highest carbon footprint per capita
+SELECT 
+    es.Survey_city,
+    (SUM(es.Annual_CO2_emission) / s.Total_population) AS Carbon_footprint_per_capita
+FROM 
+    Environmental_survey AS es
+JOIN 
+    environmental_survey_info AS esi ON es.Survey_region = esi.survey_region AND es.Survey_time = esi.survey_time
+JOIN 
+    Survey AS s ON es.Survey_region = s.Survey_region AND es.Survey_time = s.Survey_time
+GROUP BY 
+    es.Survey_city
+ORDER BY 
+    Carbon_footprint_per_capita DESC
+LIMIT 3;
+
+17.) Calculate the average BMI of Indian states.
+SELECT 
+    hsi.Survey_region AS State,
+    AVG(hs.Weight / (hs.Height * hs.Height)) AS Average_BMI
+FROM 
+    health_survey_info AS hsi
+JOIN 
+    Health_survey AS hs ON hsi.Survey_region = hs.Survey_region AND hsi.Survey_time = hs.Survey_time
+WHERE 
+    hs.Height IS NOT NULL 
+    AND hs.Weight IS NOT NULL
+GROUP BY 
+    hsi.Survey_region;
+
+18.) Give the age-group in which maximum number of people are obese. (BMI>=25)
+SELECT 
+    CASE 
+        WHEN Age < 18 THEN 'Below 18'
+        WHEN Age >= 18 AND Age < 30 THEN '18-29'
+        WHEN Age >= 30 AND Age < 40 THEN '30-39'
+        WHEN Age >= 40 AND Age < 50 THEN '40-49'
+        WHEN Age >= 50 AND Age < 60 THEN '50-59'
+        WHEN Age >= 60 THEN '60 and above'
+    END AS Age_Group,
+    COUNT(*) AS Obese_Count
+FROM 
+    Health_survey
+WHERE 
+    (Weight / (Height * Height)) >= 25
+GROUP BY 
+    Age_Group
+ORDER BY 
+    Obese_Count DESC
+LIMIT 1;
+
+18.) Give the age-group in which maximum number of people are obese. (BMI>=25)
+SELECT 
+    CASE 
+        WHEN Age < 18 THEN 'Below 18'
+        WHEN Age >= 18 AND Age < 30 THEN '18-29'
+        WHEN Age >= 30 AND Age < 40 THEN '30-39'
+        WHEN Age >= 40 AND Age < 50 THEN '40-49'
+        WHEN Age >= 50 AND Age < 60 THEN '50-59'
+        WHEN Age >= 60 THEN '60 and above'
+    END AS Age_Group,
+    COUNT(*) AS Obese_Count
+FROM 
+    Health_survey
+WHERE 
+    (Weight / (Height * Height)) >= 25
+GROUP BY 
+    Age_Group
+ORDER BY 
+    Obese_Count DESC
+LIMIT 1;
