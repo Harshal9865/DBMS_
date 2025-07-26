@@ -1,0 +1,76 @@
+ # Project Overview
+Project Title: InfoHub
+Domain: Non-Governmental Organization (NGO) Database Management
+Group ID: T108
+Team Members:
+Vivek Patel – 202201025
+Ashutosh Singarwal – 202201054
+Harshal Patel – 202201070
+Aaryan Sinh Shaurya – 202201075
+
+# Project Purpose
+To design and implement a normalized database system for an NGO to manage operations like:
+Donor registrations & donations
+Event management
+Volunteer allocation
+Beneficiary services
+Various types of surveys (Educational, Health, Environmental, Economical)
+
+# Key Features
+Admin Login & Department Management
+Donor Records & Donation Timeline
+Volunteer Assignment to Projects
+Event and Crew Coordination
+Beneficiary and Aid Distribution Tracking
+Survey Data Collection & Classification
+
+# Core Entities & Relationships
+Donors donate to Projects
+Admins manage Departments
+Departments run Projects and Events
+Event Managers manage Event Crews
+Participants attend Events
+Volunteers help in Projects
+Beneficiaries receive Aids
+Surveys are conducted across various domains and tied to projects or regions
+
+# ER Diagram Summary
+The ER diagram consists of ~20+ entities such as:
+Donors, Admins, Volunteers, Events, Participants, Event Managers, Event Crews
+Surveys and their types: Educational, Environmental, Health, Economical
+Many-to-many and 1-to-many relations handled using junction tables like Participates_in, Donation_timeline, Aids, etc.
+
+# Database Design Highlights
+All relations are normalized to BCNF. Examples:
+Donors: donor_id is the key with full donor detail
+Donation_timeline: Composite key (donor_id, donation_date)
+Volunteers, Projects, Events all use a clear primary key strategy
+Survey tables are split into domain-specific tables (health, education, etc.) with metadata stored separately (e.g., survey_info)
+
+# Key Tables (Schema Snapshots)
+1. Donors
+sql
+Copy
+Edit
+donor_id (PK), donor_name, email_id, donor_contact_details, donor_addrs_state, ...
+2. Projects
+sql
+Copy
+Edit
+project_id (PK), project_name, budget_allocated, income_source, dept_code (FK), ...
+3. Survey
+sql
+Copy
+Edit
+survey_region (PK), survey_time (PK), dept_code (FK), survey_region_population
+
+# Normalization Summary
+All major tables are in Boyce-Codd Normal Form (BCNF)
+Each entity has clear primary keys and well-defined functional dependencies
+Minimal redundancy and strong data integrity
+
+# Technologies Used
+SQL (likely MySQL/PostgreSQL)
+ER modeling tools (e.g., dbdiagram.io or draw.io)
+GitHub for version control
+IEEE format for documentation
